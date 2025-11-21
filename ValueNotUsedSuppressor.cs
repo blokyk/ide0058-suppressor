@@ -66,17 +66,17 @@ public class ValueNotUsedSuppressor : DiagnosticSuppressor
             var nodeSymbolInfo = model.GetSymbolInfo(node).Symbol;
 
             if (nodeSymbolInfo is null)
-                return;
+                continue;
 
             if (nodeSymbolInfo is not IMethodSymbol methodInfo)
-                return;
+                continue;
 
             var containingTypeName = GetFullMetadataName(methodInfo.ContainingType);
 
             Log("method's containing type is named '" + containingTypeName + "'");
 
             if (!_exceptionsMetadataNames.Contains(containingTypeName))
-                return;
+                continue;
 
             Log("type '" + containingTypeName + "' is fluent, suppressing diagnostic...");
 
