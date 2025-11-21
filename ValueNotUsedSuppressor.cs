@@ -55,7 +55,13 @@ public class ValueNotUsedSuppressor : DiagnosticSuppressor
 
         var containingTypeName = GetFullMetadataName(methodInfo.ContainingType);
 
-        return _exceptionsMetadataNames.Contains(containingTypeName);
+        // if this symbol isn't from a type we care about
+        if (!_exceptionsMetadataNames.Contains(containingTypeName))
+            return false;
+
+        // finally, check that this method actually returns the fluent type
+        var returnType = GetFullMetadataName(methodInfo.ReturnType);
+        return _exceptionsMetadataNames.Contains(returnType);
 
     }
 
