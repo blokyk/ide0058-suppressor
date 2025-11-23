@@ -3,7 +3,7 @@ using System.Collections.Immutable;
 
 namespace Blokyk.Roslyn;
 
-[DiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.FSharp, LanguageNames.VisualBasic)]
+[DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class ValueNotUsedSuppressor : DiagnosticSuppressor
 {
     private static readonly SuppressionDescriptor _suppressIDE0058Descriptor
