@@ -37,10 +37,10 @@ public class ValueNotUsedSuppressor : DiagnosticSuppressor
     }
 
     bool ShouldSuppress(Diagnostic diag, SyntaxTree tree, SemanticModel model) {
-        // we want to suppress symbols that, are fluent interfaces, i.e. that are:
+        // we want to suppress symbols that are fluent interfaces, i.e. that:
         //      1. are methods
-        //      2. comes from a fluent type
-        //      3. returns a fluent type
+        //      2. return a fluent type
+        //      3. come from a fluent type OR are extensions methods of fluent types
 
         var node = tree.GetRoot().FindNode(diag.Location.SourceSpan, getInnermostNodeForTie: true);
         var nodeSymbolInfo = model.GetSymbolInfo(node).Symbol;
@@ -53,16 +53,21 @@ public class ValueNotUsedSuppressor : DiagnosticSuppressor
         if (nodeSymbolInfo is not IMethodSymbol methodInfo)
             return false;
 
-        var containingTypeName = GetFullMetadataName(methodInfo.ContainingType);
-
-        // if this symbol isn't from a type we care about
-        if (!_exceptionsMetadataNames.Contains(containingTypeName))
+        // first, check that this method actually returns the fluent type
+        var returnType = methodInfo.ReturnType;
+        var returnTypeName = GetFullMetadataName(returnType);
+        if (!_exceptionsMetadataNames.Contains(returnTypeName))
             return false;
 
-        // finally, check that this method actually returns the fluent type
-        var returnType = GetFullMetadataName(methodInfo.ReturnType);
-        return _exceptionsMetadataNames.Contains(returnType);
+        // "receiver type" is the roslyn term for the type of the value before the `.` call operator
+        var receiverType = methodInfo.ContainingType.IsExtension
+            ? methodInfo.ContainingType.ExtensionParameter!.Type
+            : methodInfo.ReceiverType ?? methodInfo.ContainingType;
 
+        // then, if we know the return type is fluent, we can just check that
+        // the receiver type (either the containing type or the extension type)
+        // is the same fluent type
+        return GetFullMetadataName(receiverType) == returnTypeName;
     }
 
     private HashSet<string> _exceptionsMetadataNames = _builtinExceptions;
